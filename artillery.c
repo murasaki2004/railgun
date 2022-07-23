@@ -77,6 +77,6 @@ double placement(double x, double y, double c){
 }
 
 int main(void){
-    printf("1. %f", angle(88, 12));
+    printf("1. %f", angle(3, 4));
     return 0;
 }
