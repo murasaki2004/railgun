@@ -56,6 +56,7 @@ double angle(double x, double y){
     }
 }
 
+// 倾角
 double placement(double x, double y, double c){
     // 验证数据合法
     if (y < 0 || c < 0)
@@ -76,5 +77,6 @@ double placement(double x, double y, double c){
 }
 
 int main(void){
+    printf("1. %f", angle(88, 12));
     return 0;
 }
