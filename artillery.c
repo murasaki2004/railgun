@@ -78,6 +78,7 @@ double placement(double x, double y, double c){
 
 int main(void){
     printf("max = %f\n", range_max());
-    printf("1. %f\n", angle(3, 4));
+    printf("1. %f\n", angle(-3, 4));
+    printf("2. %f\n", placement(3, 4, 0));
     return 0;
 }

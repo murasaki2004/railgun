@@ -30,8 +30,8 @@ void servo_init(void);
 void led_init(void);
 
 uint16_t new_type(uint16_t);    // 通过角度计算占空比
-uint16_t Galanz(uint16_t, uint16_t);    // 输入两边长,计算瞄准点需要的平面角度
-uint16_t LimeFlavor(uint16_t, uint16_t);    // 输入同上，返回的角度为倾斜角
+uint16_t Galanz(int, uint16_t);    // 输入两边长,计算瞄准点需要的平面角度
+uint16_t LimeFlavor(int, uint16_t);    // 输入同上，返回的角度为倾斜角
 
 int main (){
 	// 初始化
@@ -60,14 +60,37 @@ int main (){
 
 void USART1_IRQHandler(void){                	//串口1中断服务程序
 	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET){
-		static uint16_t input_x = 0, input_y = 0;
+		static uint16_t input_y = 0, ttmp = 0;
+		static int input_x = 0;
 		
 		// y 与 x 的输入
 		if (input_x == input_y && input_x == 0){
 			input_x = USART_ReceiveData(USART1);
 			delay_ms(5);
 			USART_SendData(USART1, input_x);
-		} else if (input_y == 0){
+			
+			// 对第二象限的值适配
+			if (input_x > rang_max){
+				input_x = 0;
+				ttmp = 1;
+				
+				// 表示下次输入的x值将会反转
+				delay_ms(5);
+				USART_SendData(USART1, 0x11);
+			} else {
+				
+				// 判断输入的数据
+				if (input_x > rang_max){
+					input_x = 0;
+					USART_SendData(USART1, 0);
+				} else {
+					input_x = -input_x;
+				}
+				
+				// 重置状态
+				ttmp = 0;
+			}
+		} else if (input_y == ttmp){
 			input_y = USART_ReceiveData(USART1);
 			delay_ms(5);
 			USART_SendData(USART1, input_y);
@@ -78,10 +101,19 @@ void USART1_IRQHandler(void){                	//串口1中断服务程序
 			if (sqrt(input_x * input_x + input_y * input_y) < rang_max){
 				volatile uint16_t tmp;
 				
+				// 平面角度
 				tmp = new_type(Galanz(input_x, input_y));
 				TIM_SetCompare2(TIM3, tmp);
+				
+				// 倾斜角度
 				tmp = new_type(LimeFlavor(input_x, input_y));
 				TIM_SetCompare2(TIM2, tmp);
+				
+				// 完成信号
+				USART_SendData(USART1, 0xe0);
+			} else {
+				// 错误反馈
+				USART_SendData(USART1, 0);
 			}
 		}
 	}
@@ -92,7 +124,7 @@ uint16_t new_type(uint16_t angle){
 	tmp = tmp * angle + 0.5;
 	tmp = (tmp / 10) * (Tim_Arr + 1);
 	
-	// 判断是否正常
+	// 判断计算出的值是否正常
 	if (tmp <= 250 && tmp >= 50){
 		return (Tim_Arr + 1) - tmp;
 	}else{
@@ -100,28 +132,31 @@ uint16_t new_type(uint16_t angle){
 	}
 }
 
-uint16_t LimeFlavor(uint16_t x, uint16_t y){
-	double c = 0, angle = 0, tmp = M_g;
+uint16_t LimeFlavor(int x, uint16_t y){
+	volatile double c = 0, angle = 0, tmp = M_g;
+	
 	c = sqrt(x*x + y*y);
   angle = asin((c * tmp) / pow(V_0, 2.0));
   angle = angle * (180 / M_PI) / 2;
+	
 	return angle;
 }
 
-uint16_t Galanz(uint16_t x, uint16_t y){
+uint16_t Galanz(int x, uint16_t y){
 	volatile double c = 0, angle_plane = 0;
 	int tmp = 0;
-		// 去符号
-		//if (x < 0){
-      //x = sqrt(pow(x, 2.0));
-			//tmp = 1;
-		//}
+	
+	// 去符号
+	if (x < 0){
+		x = sqrt(pow(x, 2.0));
+		tmp = 1;
+	}
 		
-		// 计算
+	// 计算
 	c = sqrt(x*x + y*y);
 	angle_plane = asin(y / c);
 		
-		// 弧度转角度
+	// 弧度转角度后返回值
 	if (tmp)
 		return (angle_plane * (180 / M_PI)) + 90;
 	else
