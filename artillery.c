@@ -76,9 +76,19 @@ double placement(double x, double y, double c){
     return angle;
 }
 
-int main(void){
+int main(double argc, char* argv[]){
+    if (0){
+        printf("parameter error\n");
+        return 0;
+    }
+
+    double sys_in_x = 0, sys_in_y = 0;
+    sys_in_x = atoi(argv[1]);
+    sys_in_y = atoi(argv[2]);
+    
+    printf("x = %f, y = %f\n", sys_in_x, sys_in_y);
     printf("max = %f\n", range_max());
-    printf("1. %f\n", angle(-3, 4));
-    printf("2. %f\n", placement(3, 4, 0));
+    printf("ping mian = %f, qingxie = %f\n"
+    , angle(sys_in_x, sys_in_y), placement(sys_in_x, sys_in_y, 0));
     return 0;
 }
