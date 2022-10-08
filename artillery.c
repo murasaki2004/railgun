@@ -77,11 +77,6 @@ double placement(double x, double y, double c){
 }
 
 int main(double argc, char* argv[]){
-    if (0){
-        printf("parameter error\n");
-        return 0;
-    }
-
     double sys_in_x = 0, sys_in_y = 0;
     sys_in_x = atoi(argv[1]);
     sys_in_y = atoi(argv[2]);
